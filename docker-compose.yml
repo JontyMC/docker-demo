@@ -1,0 +1,10 @@
+redis:
+    image: redis
+    container_name: redis
+    ports:
+        - "6379:6379"
+hello_world:
+    build: ./api_redis
+    container_name: hello_world
+    ports:
+        - "5004:5004"

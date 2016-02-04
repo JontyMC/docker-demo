@@ -12,6 +12,7 @@
 1. Run container:```docker run -t -d -P --name hello_world demo/hello_world```
 1. Show running containers view port:```docker ps -a```
 1. Show in browser:```http://localhost:xxxx/```
+1. Show logs:```docker logs hello_world```
 1. Show running containers:```docker ps -a```
 1. Stop:```docker stop hello_world```
 1. Remove: ```docker rm hello_world```
@@ -32,6 +33,7 @@
 1. Pull built image from registry:```docker pull jontymc/hello_world```
 1. Run image with specific port:```docker run -t -d -p 5005:5004 --name hello_world2 jontymc/hello_world```
 1. Show in browser:```http://localhost:5005/```
+1. Show other in browser:```http://localhost:5005/```
 1. Stop and remove in one line: ```docker rm --force `docker ps -qa````
 
 ##Volumes
@@ -85,4 +87,44 @@
 
 ##Managing Multiple Containers with Compose
 
-1.
+* Our application now consists of two containers, annoying to have to run both
+* Docker Compose lets us specify which containers to run in a manifest
+
+1. Navigate to docker-demo root:```cd ..```
+1. Open VSCode:```code .```
+1. Show [docker-compose.yml](docker-compose.yml)
+
+* Containers run in order specified
+* We are building hello_world api here, but we could also choose to pull from registry like redis. We could even choose a specific version.
+* You could set up a test environment with any combination by simply changing the manifest
+
+1. Close VSCode
+1. Remove all containers: ```docker rm --force `docker ps -qa````
+1. Show running containers:```docker ps -a```
+1. Run compose:```docker-compose up -d```
+1. Show running containers:```docker ps -a```
+1. Show in browser:```http://localhost:5004/```
+
+* No data, because redis has been recreated
+
+1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
+1. Insert message:```SET message "Hello from Redis"```
+1. Get it back:```GET message```
+1. Exit
+1. Show in browser:```http://localhost:5004/```
+
+##Persistence with Data Volumes
+
+1. Remove all containers: ```docker rm --force `docker ps -qa````
+1. Create data volume:```docker create -v /redis_data --name redis_data redis /bin/true```
+
+* While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
+
+
+
+
+* Data volumes can be used for backup, restore and migration
+* Imagine having a build that output known, good test data
+* Or doing a live-migration ahead of time and hot-swapping the data
+
+## TODO: Data volumes, networks, compose

@@ -10,7 +10,8 @@
         "**.vspscc"
     ],
     "dependencies": {
-        "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final"
+        "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final",
+        "StackExchange.Redis.Mono": "1.0.0"
     },
     "commands": {
         "web": "Microsoft.AspNet.Server.Kestrel --server.urls http://*:5004"    
