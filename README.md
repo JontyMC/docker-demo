@@ -63,7 +63,9 @@
 
 * We could run application with DNX-watch, which will restart application when any files change
 * It is possible to run the entire dev environment inside a docker container
-* Eg, here is spotify running from a container:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
+* Eg, here is spotify running from a container:
+  *```xhost local:root```
+  *```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
 
 ##Containerized Redis
 
@@ -99,13 +101,13 @@
 * You could set up a test environment with any combination by simply changing the manifest
 
 1. Close VSCode
-1. Remove all containers: ```docker rm --force `docker ps -qa````
+1. Remove all containers:```docker rm --force `docker ps -qa````
 1. Show running containers:```docker ps -a```
 1. Run compose:```docker-compose up -d```
 1. Show running containers:```docker ps -a```
 1. Show in browser:```http://localhost:5004/```
 
-* No data, because redis has been recreated
+* No data, because redis has been reinstalled
 
 1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
 1. Insert message:```SET message "Hello from Redis"```
@@ -115,16 +117,30 @@
 
 ##Persistence with Data Volumes
 
-1. Remove all containers: ```docker rm --force `docker ps -qa````
+1. Remove all containers:```docker rm --force `docker ps -qa````
 1. Create data volume:```docker create -v /redis_data --name redis_data redis /bin/true```
+  * While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
+1. Run redis with mapped volume:```docker run --name redis -d -p 6379:6379 --volumes-from redis_data redis redis-server --appendonly yes```
+  * ```redis-server --appendonly yes``` is the command to run the container as persistent redis
+1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
+1. Insert message:```SET message "Hello from Redis"```
+1. Get it back:```GET message```
+1. Exit
 
-* While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
+* We can now use this volume in our compose setup
 
-
-
+1. Open VSCode:```code .```
+1. Show [docker-compose-data.yml](docker-compose-data.yml)
+1. Remove redis:```docker rm --force redis```
+1. Run compose:```docker-compose -f docker-compose-data.yml up -d```
+1. Show running containers:```docker ps -a```
+1. Show in browser:```http://localhost:5004/```
+1. Remove all containers:```docker rm --force `docker ps -qa````
 
 * Data volumes can be used for backup, restore and migration
 * Imagine having a build that output known, good test data
+* Could create a registry of data images for different scenarios
 * Or doing a live-migration ahead of time and hot-swapping the data
 
-## TODO: Data volumes, networks, compose
+
+## TODO: networks
