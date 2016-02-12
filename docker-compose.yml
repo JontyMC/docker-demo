@@ -7,6 +7,7 @@ services:
             - "6379:6379"
     hello:
         build: ./api_redis
+        image: demo/hello
         container_name: hello
         ports:
             - "5004:5004"

@@ -16,7 +16,7 @@
 1. Build image:```docker build -t demo/hello .```
 1. List images:```docker images -a```
 1. Run container:```docker run -t -d -P --name hello demo/hello```
-1. Show running containers view port:```docker ps -a```
+1. Show containers (point out dynamically assigned port):```docker ps -a```
 1. Show in browser:```http://localhost:xxxx/```
 1. Show logs:```docker logs hello```
 1. Show info, eg ip:```docker inspect hello```
@@ -32,16 +32,20 @@
 
 * Now we have a Docker image, what are we going to do with it?
 * Need some way to share images
-* Explain how docker changes dev/ops contract from nuget package - docker image
-* CI
+* Docker has concept of registries, a bit like nuget repositories, but for docker images
+* The equivalent of the public nuget feed is docker hub::```https://hub.docker.com/```
+* Have previously pushed the "hello" container to dockerhub:```docker push jontymc/hello```
 * Show, inc build settings:```https://hub.docker.com/r/jontymc/hello/```
 
 1. Show running containers:```docker ps -a```
 1. Pull built image from registry:```docker pull jontymc/hello```
 1. Run image with specific port:```docker run -t -d -p 5005:5004 --name hello2 jontymc/hello```
 1. Show in browser:```http://localhost:5005/```
-1. Show other in browser:```http://localhost:5005/```
+1. Show other in browser:```http://localhost:5004/```
 1. Stop and remove in one line: ```docker rm --force `docker ps -qa````
+
+* Normal workflow would be for CI to push images to a registry
+* Docker changes dev/ops contract from nuget package to docker image
 
 ##Volumes
 
@@ -71,15 +75,15 @@
 * We could run application with DNX-watch, which will restart application when any files change
 * It is possible to run the entire dev environment inside a docker container
 * Eg, here is spotify running from a container:
-  *```xhost local:root```
-  *```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
+  * ```xhost local:root```
+  * ```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
 
 ##Containerized Redis
 
 1. Remove all containers: ```docker rm --force `docker ps -qa````
 1. Run redis:```docker run --name redis -d -p 6379:6379 redis```
 1. Show running containers:```docker ps -a```
-1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
+1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
@@ -117,7 +121,7 @@
 
 * No data, because redis has been reinstalled
 
-1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
+1. Run cli:```docker run -it --net=dockerdemo_default --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
@@ -130,7 +134,7 @@
   * While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
 1. Run redis with mapped volume:```docker run --name redis -d -p 6379:6379 --volumes-from redis_data redis redis-server --appendonly yes```
   * ```redis-server --appendonly yes``` is the command to run the container as persistent redis
-1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h "$REDIS_PORT_6379_TCP_ADDR" -p "$REDIS_PORT_6379_TCP_PORT"'```
+1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
