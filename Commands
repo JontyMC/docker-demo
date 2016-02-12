@@ -7,11 +7,11 @@ docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
 
 API
 
-docker build -t demo/hello_world .
-docker run -t -d -P --name hello_world demo/hello_world
-docker port hello_world
-docker run -t -d -p 80:5004 --name hello_world demo/hello_world
-docker run -t -d -p 80:5004 --name hello_world -v `pwd`:/app demo/hello_world
+docker build -t demo/hello .
+docker run -t -d -P --name hello demo/hello
+docker port hello
+docker run -t -d -p 80:5004 --name hello demo/hello
+docker run -t -d -p 80:5004 --name hello -v `pwd`:/app demo/hello
 
 Redis
 

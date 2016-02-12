@@ -8,7 +8,7 @@ namespace Api
     {
         public void Configure(IApplicationBuilder app)
         {
-            app.Run(async x => await x.Response.WriteAsync("Hello, world!"));
+            app.Run(async x => await x.Response.WriteAsync("Hello world!"));
         }
     }
 }

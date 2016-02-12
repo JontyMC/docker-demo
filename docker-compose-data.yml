@@ -6,8 +6,8 @@ redis:
     volumes_from:
         - "redis_data"
     command: redis-server --appendonly yes
-hello_world:
+hello:
     build: ./api_redis
-    container_name: hello_world
+    container_name: hello
     ports:
         - "5004:5004"
