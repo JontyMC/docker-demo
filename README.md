@@ -47,7 +47,7 @@
 * Normal workflow would be for CI to push images to a registry
 * Docker changes dev/ops contract from nuget package to docker image
 
-##Volumes
+##Make Changes to a Container
 
 * How do we make a change and rebuild the container?
 
@@ -59,12 +59,12 @@
 1. Show running containers:```docker ps -a```
 1. Show in browser:```http://localhost:5004/```
 
-* Having to rebuild the image each time is clunky, let's use volume
+* Having to rebuild the image each time is clunky
+* Instead we can mount a host directory inside the container
 
 1. Remove:```docker rm --force `docker ps -qa````
 1. Show running containers:```docker ps -a```
-1. Run image from demo 1 with a volume:```docker run -t -d -p 5004:5004 --name hello -v `pwd`:/app demo/hello```
-  * This mounts the host directory inside the container
+1. Run image from demo 1 with a host mount:```docker run -t -d -p 5004:5004 --name hello -v `pwd`:/app demo/hello```
 1. Show running containers:```docker ps -a```
 1. Open VSCode:```code .```
 1. Change "Hello Huddle" to "Hello world"
@@ -82,6 +82,7 @@
 
 1. Remove all containers: ```docker rm --force `docker ps -qa````
 1. Run redis:```docker run --name redis -d -p 6379:6379 redis```
+1. Show logs:```docker logs redis```
 1. Show running containers:```docker ps -a```
 1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
@@ -129,9 +130,20 @@
 
 ##Persistence with Data Volumes
 
+* Volumes allow data to be shared between containers
+* Volumes persist event if the container has been deleted
+
 1. Remove all containers:```docker rm --force `docker ps -qa````
-1. Create data volume:```docker create -v /redis_data --name redis_data redis /bin/true```
+1. List existing volumes:```docker volumes ls```
+1. Remove volumes:```docker volume rm `docker volume ls -qf dangling=true````
+1. List volumes:```docker volumes ls```
+1. Show running containers:```docker ps -a```
+1. Create volume:```docker volume create --name redis_data```
+1. List volumes:```docker volumes ls```
+1. Create data container with a named volume:```docker create -v redis_data:/redis_data --name redis_data redis /bin/true```
   * While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
+  * /bin/true is a noop command
+1. Show running containers:```docker ps -a```
 1. Run redis with mapped volume:```docker run --name redis -d -p 6379:6379 --volumes-from redis_data redis redis-server --appendonly yes```
   * ```redis-server --appendonly yes``` is the command to run the container as persistent redis
 1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
@@ -156,8 +168,7 @@
 
 
 
-
-## TODO: versioning v1+v2, networks, compose options eg scale
+## TODO: versioning v1+v2, networks, compose options eg scale, extend compose files
 
 ##Not covered
 
