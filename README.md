@@ -1,17 +1,21 @@
 #Docker Demo with .NET Core
 
 * Fast paced with a lot of command line typing - so ask questions if you don't understand something
+* Docker: no longer deploy app onto an environment, deploy app with the environment
+
 
 ##Hello World
 * Ensure images are cleared except for microsoft/aspnet:1.0.0-rc1-final
 * ```docker rmi `docker images -q````
 * ```docker pull microsoft/aspnet:1.0.0-rc1-final```
 
-1. Navigate to api:```cd api```
-1. Open VSCode:```code .```
-1. The simplest [.NET Core HTTP API, using OWIN](api/Startup.cs)
-1. [Dockerfile](api/Dockerfile) - each command is a cached layer
-1. Close VSCode
+1. Explain [.NET Core HTTP API, using OWIN](api/Startup.cs)
+  * Simplest possible .NET Core API
+1. Explain [Dockerfile](api/Dockerfile)
+  * Inherits from asp.net mono image
+  * Each command is a cached layer
+  * DNU restore restores all packages in the project.json file
+  * So, we copy project.json first so we don't have to re-pull packages every time we rebuild the code layer
 1. List images (layers):```docker images -a```
 1. Build image:```docker build -t demo/hello .```
 1. List images:```docker images -a```
@@ -51,9 +55,7 @@
 
 * How do we make a change and rebuild the container?
 
-1. Open VSCode:```code .```
-1. Change "Hello world" to "Hello Huddle"
-1. Close VSCode
+1. Change "Hello world" to "Hello Huddle" in api code
 1. Rebuild image:```docker build -t demo/hello .```
 1. Run image:```docker run -t -d -p 5004:5004 --name hello demo/hello```
 1. Show running containers:```docker ps -a```
@@ -66,9 +68,7 @@
 1. Show running containers:```docker ps -a```
 1. Run image from demo 1 with a host mount:```docker run -t -d -p 5004:5004 --name hello -v `pwd`:/app demo/hello```
 1. Show running containers:```docker ps -a```
-1. Open VSCode:```code .```
-1. Change "Hello Huddle" to "Hello world"
-1. Close VSCode
+1. Change "Hello Huddle" back to "Hello world" in api code
 1. Restart container:```docker restart hello```
 1. Show in browser:```http://localhost:5004/```
 
@@ -80,20 +80,18 @@
 
 ##Containerized Redis
 
-1. Remove all containers: ```docker rm --force `docker ps -qa````
+1. Remove all containers:```docker rm --force `docker ps -qa````
 1. Run redis:```docker run --name redis -d -p 6379:6379 redis```
 1. Show logs:```docker logs redis```
 1. Show running containers:```docker ps -a```
 1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
+  * "link" flag means map the "redis" container to the hostname "redis" inside the container
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
 1. Show running with -rm flag removes container when stopped:```docker ps -a```
-1. Navigate to api_redis:```cd ../api_redis```
-1. Open VSCode:```code .```
 1. Show added reference to stack exchange in [project.json](api_redis/project.json)
 1. Show [redis code in api](api_redis/startup.cs)
-1. Close VSCode
 1. Build image:```docker build -t demo/hello .```
 1. Run image:```docker run -t -d -p 5004:5004 --name hello demo/hello```
 1. Show running containers:```docker ps -a```
@@ -104,71 +102,86 @@
 * Our application now consists of two containers, annoying to have to run both
 * Docker Compose lets us specify which containers to run in a manifest
 
-1. Navigate to docker-demo root:```cd ..```
-1. Open VSCode:```code .```
 1. Show [docker-compose.yml](docker-compose.yml)
-
-* Containers run in order specified
-* We are building hello api here, but we could also choose to pull from registry like redis. We could even choose a specific version.
-* You could set up a test environment with any combination by simply changing the manifest
-
-1. Close VSCode
+  * Containers run in order specified
+  * We are building hello api here, but we could also choose to pull from registry like redis. We could even choose a specific version.
 1. Remove all containers:```docker rm --force `docker ps -qa````
 1. Show running containers:```docker ps -a```
-1. Run compose:```docker-compose up -d```
-1. Run compose as daemon:```docker-compose up```
+1. Run compose as daemon:```docker-compose up -d```
 1. Show running containers:```docker ps -a```
+1. Show logs:```docker-compose logs```
 1. Show in browser:```http://localhost:5004/```
-
-* No data, because redis has been reinstalled
-
+  * No data, because redis has been reinstalled
 1. Run cli:```docker run -it --net=dockerdemo_default --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
 1. Show in browser:```http://localhost:5004/```
+1. Remove composed application:```docker-compose down```
 
 ##Persistence with Data Volumes
 
 * Volumes allow data to be shared between containers
 * Volumes persist event if the container has been deleted
 
-1. Remove all containers:```docker rm --force `docker ps -qa````
 1. List existing volumes:```docker volumes ls```
 1. Remove volumes:```docker volume rm `docker volume ls -qf dangling=true````
 1. List volumes:```docker volumes ls```
 1. Show running containers:```docker ps -a```
-1. Create volume:```docker volume create --name redis_data```
-1. List volumes:```docker volumes ls```
-1. Create data container with a named volume:```docker create -v redis_data:/redis_data --name redis_data redis /bin/true```
-  * While this container doesn’t run an application, it reuses the redis image so that all containers are using layers in common, saving disk space.
-  * /bin/true is a noop command
-1. Show running containers:```docker ps -a```
-1. Run redis with mapped volume:```docker run --name redis -d -p 6379:6379 --volumes-from redis_data redis redis-server --appendonly yes```
+1. Create volume:```docker volume create --name dockerdemo_redis_data```
+1. Run redis with mapped volume:```docker run --name redis -d -v dockerdemo_redis_data:/data redis redis-server --appendonly yes```
   * ```redis-server --appendonly yes``` is the command to run the container as persistent redis
 1. Run cli:```docker run -it --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit
+1. Remove redis:```docker rm --force redis```
+1. But we still have volume:```docker volumes ls```
 
 * We can now use this volume in our compose setup
 
-1. Open VSCode:```code .```
 1. Show [docker-compose-data.yml](docker-compose-data.yml)
-1. Remove redis:```docker rm --force redis```
 1. Run compose:```docker-compose -f docker-compose-data.yml up -d```
 1. Show running containers:```docker ps -a```
 1. Show in browser:```http://localhost:5004/```
-1. Remove all containers:```docker rm --force `docker ps -qa````
+1. Remove composed application:```docker-compose -f docker-compose-data.yml down```
 
+* We didn't actually need to create the volume, as it would be automatically created through compose up
 * Data volumes can be used for backup, restore and migration
 * Imagine having a build that output known, good test data
 * Could create a registry of data images for different scenarios
 * Or doing a live-migration ahead of time and hot-swapping the data
 
+##Multiple Environments On Single Host
+
+* Docker has virtualised networking that allows us to create isolated environments with multiple containers
+
+1. Show networks:```docker network ls```
+1. Remove all non-default networks:```docker network ls | awk '{print $1, $2}' | grep -v 'none\|host\|bridge' | awk '{print $1}' | xargs docker network rm```
+1. Show [docker-compose-multi.yml](docker-compose-multi.yml)
+  * Removed container name, so name will be autogenerated based on the network name
+  * Added container to put data into redis automatically
+  * Hello API port is being randomly assigned
+1. Run compose with project name environment variable:```COMPOSE_PROJECT_NAME=env1 docker-compose -f docker-compose-multi.yml up -d```
+1. Show running containers:```docker ps -a```
+1. Show networks:```docker network ls```
+1. Show volumes:```docker volume ls```
+1. Run another environment:```COMPOSE_PROJECT_NAME=env2 docker-compose -f docker-compose-multi.yml up -d```
+1. Show running containers:```docker ps -a```
+1. Show networks:```docker network ls```
+1. Remove containers:```docker rm --force `docker ps -qa````
+1. Lets run 5 environments in one line:```for i in {1..5}; do COMPOSE_PROJECT_NAME=env$i docker-compose -f docker-compose-multi.yml up -d; done```
+1. Show running containers:```docker ps -a```
+
+##Running Tests
+
+1. Remove containers:```docker rm --force `docker ps -qa````
+1. Run compose:```COMPOSE_PROJECT_NAME=test docker-compose -f docker-compose-multi.yml up -d```
+1. Run Phantom tests:```docker run --net test_default --link test_hello_1:hello -v `pwd`:/mnt/test cmfatih/phantomjs /usr/bin/phantomjs /mnt/test/test.js```
+1. Remove composed application:```docker-compose -f docker-compose-data.yml -p test down```
 
 
-## TODO: versioning v1+v2, networks, compose options eg scale, extend compose files
+## TODO: versioning v1+v2, compose options eg scale, extend compose files
 
 ##Not covered
 

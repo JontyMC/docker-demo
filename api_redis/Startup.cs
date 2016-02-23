@@ -9,7 +9,7 @@ namespace Api
     {
         public void Configure(IApplicationBuilder app)
         {
-            var redis = ConnectionMultiplexer.Connect("192.168.154.128");
+            var redis = ConnectionMultiplexer.Connect("redis");
  
             app.Run(async x => {
                 var db = redis.GetDatabase();
