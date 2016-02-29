@@ -73,16 +73,32 @@
 1. Restart container:```docker restart hello```
 1. Show in browser:```http://localhost:5004/```
 
-* Restarting the container is clunky TODO: DNX Watch
-* Mounting from host is OK, but it requires the host to have all the dependencies that the code needs so that we can build and run it, ie .net, dnx, visual studio, etc
+* Restarting the container is clunky
+* .NET Core has a feature called dnx-watch that restarts the application when changes to the source code are detected
+
+1. Show [dockerfile for dnx-watch](api_watch/dockerfile)
+1. Change directory:```api_watch```
+1. Build image for dnx-watch:```docker build -t demo/watch .```
+1. Change directory:```../api```
+1. Remove:```docker rm --force `docker ps -qa````
+1. Run application with host mount:```docker run -t -d -p 5004:5004 --name hello -v `pwd`:/app demo/watch```
+1. Show in browser:```http://localhost:5004/```
+1. Change "Hello Huddle" back to "Hello world1" in api code
+1. Show in browser:```http://localhost:5004/```
+1. Show logs:```docker logs hello```
+ 
+* Mounting from host is OK, as .NET Core doesn't require the code to be compiled
+* If we need to compile a dll to run the application, we would require the host to have all the dependencies to do so, ie .net, dnx, visual studio, etc
 * Wouldn't it be better to have our dev environment inside a container? Yes it would:
 
-1. Run visual studio from a container, ready to dev:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --name vscode jontymc/vscode_aspnet```
+1. Run container ready to dev:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --rm -v `pwd`:/app --name vscode jontymc/vscode_aspnet```
+1. Now inside container, change directory:```cd ../app```
+1. Run vscode:```sudo code .```
 
-* We could run application with DNX-watch, which will restart application when any files change
-* Eg, here is spotify running from a container:
+* Possible to run any GUI apps in docker, eg, here is spotify running from a container:
   * ```xhost local:root```
   * ```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
+* This could be how all apps are run in the future, including on mobile devices
 
 ##Containerized Redis
 
