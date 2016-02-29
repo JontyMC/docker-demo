@@ -1,6 +1,7 @@
 #Docker Demo with .NET Core
 
 * Fast paced with a lot of command line typing - so ask questions if you don't understand something
+* Run slides using Chrome in a Docker container!:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v `pwd`/slides:/slides --rm --name chrome jess/chrome --user-data-dir=/data --app=file:///slides/index.html --no-first-run --start-maximized```
 * Docker: no longer deploy app onto an environment, deploy app with the environment
 
 
@@ -72,8 +73,13 @@
 1. Restart container:```docker restart hello```
 1. Show in browser:```http://localhost:5004/```
 
+* Restarting the container is clunky TODO: DNX Watch
+* Mounting from host is OK, but it requires the host to have all the dependencies that the code needs so that we can build and run it, ie .net, dnx, visual studio, etc
+* Wouldn't it be better to have our dev environment inside a container? Yes it would:
+
+1. Run visual studio from a container, ready to dev:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --name vscode jontymc/vscode_aspnet```
+
 * We could run application with DNX-watch, which will restart application when any files change
-* It is possible to run the entire dev environment inside a docker container
 * Eg, here is spotify running from a container:
   * ```xhost local:root```
   * ```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name spotify jess/spotify```
@@ -92,6 +98,7 @@
 1. Show running with -rm flag removes container when stopped:```docker ps -a```
 1. Show added reference to stack exchange in [project.json](api_redis/project.json)
 1. Show [redis code in api](api_redis/startup.cs)
+1. Change directory:```cd ../api_redis```
 1. Build image:```docker build -t demo/hello .```
 1. Run image:```docker run -t -d -p 5004:5004 --name hello demo/hello```
 1. Show running containers:```docker ps -a```
