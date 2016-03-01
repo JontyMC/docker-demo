@@ -1,9 +1,48 @@
 #Docker Demo with .NET Core
 
-* Fast paced with a lot of command line typing - so ask questions if you don't understand something
+* Fast paced with a lot of command line typing - please ask questions if you don't understand something
 * Run slides using Chrome in a Docker container!:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v `pwd`/slides:/slides --rm --name chrome jess/chrome --user-data-dir=/data --app=file:///slides/index.html --no-first-run --start-maximized```
-* Docker: no longer deploy app onto an environment, deploy app with the environment
 
+##What is Docker?
+
+* High level API and tooling to manage containers
+* Containers are a linux feature that provides isolation of processes
+* They allow you to run multiple isolated systems on a single host machine
+* They're a bit like a virtual machine, but work in a different way by creating a virtual environemnt with their own CPU, memory, networking and I/O
+* You no longer have to worry about what software, or particular versions of software, is installed when deploying, because they are packaged with your application
+
+* Works on every machine
+
+##Dependency Hell
+
+* From local to live, we have to manage a lot of dependencies
+* The biggest problem is locally, where we have everything installed on one box
+* Managing these dependencies costs us a lot of time and money
+
+* With Docker we no longer deploy app onto an environment, we deploy environment with the app 
+* A Docker container has everything it needs to run packaged with it
+* This changes the contract between development and operations, from nuget packages to Docker images
+* Containers allow us to upgrade a particular dependency without having to retest everything, as it is isolated to the app that depends on it
+
+##VMs vs Containers
+
+* Container share the same kernel, so are much faster than VMs to start and stop - less friction
+* As they share a kernel, you can't run windows containers on linux and vice versa
+* They also share code where possible
+
+* With VMS, you have to create an entire new image for any modification
+* Container images are simply files and modifications to them are stored as diffs, similar to git
+* In this regard, you can think of Docker as like git for infrastructure
+
+##How are containers built?
+
+* The Dockerfile contains the instructions of how the container is built
+* Using a Docker engine, we can build a container image from the Dockerfile
+* This can then be pushed to a central registry, similar to nuget
+* 3rd parties can then pull and run the exact same image
+* Like git, only the diffs between images are pulled
+
+#Demo Time
 
 ##Hello World
 * Ensure images are cleared except for microsoft/aspnet:1.0.0-rc1-final
@@ -204,12 +243,30 @@
 1. Remove composed application:```docker-compose -f docker-compose-data.yml -p test down```
 
 
-## TODO: versioning v1+v2, compose options eg scale, extend compose files
+## TODO: compose options eg scale, extend compose files
+
+##Security features
+
+* Docker daemon currently requires root privileges, so only trusted users should have access
+* Namespaces mean processes cannot interact with each other
+* Each container has its own network stack
+* Control groups manage memory, CPU and disk I/O usage
+* Docker are working on code to search images in docker hub for vunerabilities
+
+###1.9
+
+* Networking
+
+###1.10
+
+* Granular permissions on system calls with security profiles
+* Multiple user namespaces on single host
+* Authorization plugins
+
 
 ##Not covered
 
 * Docker swarm
 * Docker machine
-* Docker networking
 * Other orchestration tools - eg kubernetes or mesos
 * https://www.mindmeister.com/389671722/open-container-ecosystem-formerly-docker-ecosystem
