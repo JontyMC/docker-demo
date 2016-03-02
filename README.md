@@ -1,53 +1,74 @@
 #Docker Demo with .NET Core
 
-* Fast paced with a lot of command line typing - please ask questions if you don't understand something
-* Run slides using Chrome in a Docker container!:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v `pwd`/slides:/slides --rm --name chrome jess/chrome --user-data-dir=/data --app=file:///slides/index.html --no-first-run --start-maximized```
+* I'm going to show some slides to introduce Docker concepts
+* But then I'm going to do some demos to show you how easy it is to work with
+* And hopefully demonstrate the benefits it brings to the development process
+* There's a lot to get through, but stop me if I'm going to fast.
+* ```xhost local:root```
+* ```cd dev/docker_demo```
+* First of all, I'm gonna run the slides using Chrome in a Docker container!:```docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY -v `pwd`/slides:/slides --rm --name chrome jess/chrome --user-data-dir=/data --app=file:///slides/index.html --no-first-run --start-maximized```
 
 ##What is Docker?
 
 * High level API and tooling to manage containers
-* Containers are a linux feature that provides isolation of processes
-* They allow you to run multiple isolated systems on a single host machine
-* They're a bit like a virtual machine, but work in a different way by creating a virtual environemnt with their own CPU, memory, networking and I/O
-* You no longer have to worry about what software, or particular versions of software, is installed when deploying, because they are packaged with your application
 
-* Works on every machine
+* Containers are like virtual machines, but they share a kernel and re-use parts of their images which enables them to be much faster and streamlined
+  * Like virtual machines, they provide isolation of processes and you can run multiple containers on a single host
+
+* They can be shared and run anywhere
+    * You no longer have to worry about what software, or particular versions of software, is installed when deploying, because they are packaged with your application
+
+* They work on every machine
 
 ##Dependency Hell
 
-* From local to live, we have to manage a lot of dependencies
+* From local to test to live, we have to manage a lot of dependencies
 * The biggest problem is locally, where we have everything installed on one box
 * Managing these dependencies costs us a lot of time and money
-
-* With Docker we no longer deploy app onto an environment, we deploy environment with the app 
-* A Docker container has everything it needs to run packaged with it
-* This changes the contract between development and operations, from nuget packages to Docker images
-* Containers allow us to upgrade a particular dependency without having to retest everything, as it is isolated to the app that depends on it
+* We've all lost countless hours setting up our machines or trying to work out why our code doesn't work on another environment or someone elses machine
+docker 
+* With Docker we no longer deploy app onto an environment, we deploy the app with the environment 
+* The container has everything it needs to run packaged with it and it's guaranteed to be the same for everybody
+* And it runs in the same way on local, test and live
+* This fundamentally changes the contract between development and operations
+* We would no longer deploy nuget packages onto an environment we hope has all the right things installed
+* Instead we deploy the container and all its dependencies as one package
+* This gives us much more confidence that what worked locally will work live
+* There are other benefits to the isolation that containers bring, for example:
+    * We can upgrade a particular dependency without having to retest everything, as it is isolated to the app that depends on it
+    * We can control the resources that a container uses, CPU/memory/disk IO/etc
+    * We can restrict the scope of what that application can do on the host
 
 ##VMs vs Containers
 
-* Container share the same kernel, so are much faster than VMs to start and stop - less friction
-* As they share a kernel, you can't run windows containers on linux and vice versa
-* They also share code where possible
+* Container share the same kernel, so are much faster than VMs to start and stop
+* They also share code where possible so are much smaller
+* Because they share a kernel, you can't run windows containers on linux and vice versa
 
 * With VMS, you have to create an entire new image for any modification
-* Container images are simply files and modifications to them are stored as diffs, similar to git
-* In this regard, you can think of Docker as like git for infrastructure
+* Container images are just files and modifications to them are stored as diffs, similar to git
+* In this way Docker is a bit like git for environments
 
 ##How are containers built?
 
-* The Dockerfile contains the instructions of how the container is built
-* Using a Docker engine, we can build a container image from the Dockerfile
+* Every container has a Dockerfile, which contains the instructions of how to build the container
+* Using the Docker engine, we can create a container image from the Dockerfile
 * This can then be pushed to a central registry, similar to nuget
-* 3rd parties can then pull and run the exact same image
-* Like git, only the diffs between images are pulled
+* 3rd parties can then pull and run the same image
+* Only the diffs between images are pulled, so this is quite efficient and quick
+* Now I'm going to show you how this all works
 
 #Demo Time
 
 ##Hello World
-* Ensure images are cleared except for microsoft/aspnet:1.0.0-rc1-final
+* Ensure images are cleared except for those needed
 * ```docker rmi `docker images -q````
 * ```docker pull microsoft/aspnet:1.0.0-rc1-final```
+* ```docker pull jontymc/hello```
+* ```docker pull jontymc/vscode_aspnet```
+* ```docker pull jess/chrome```
+* ```docker pull jess/spotify```
+* ```docker pull redis```
 
 1. Explain [.NET Core HTTP API, using OWIN](api/Startup.cs)
   * Simplest possible .NET Core API
@@ -241,6 +262,45 @@
 1. Run compose:```COMPOSE_PROJECT_NAME=test docker-compose -f docker-compose-multi.yml up -d```
 1. Run Phantom tests:```docker run --net test_default --link test_hello_1:hello -v `pwd`:/mnt/test cmfatih/phantomjs /usr/bin/phantomjs /mnt/test/test.js```
 1. Remove composed application:```docker-compose -f docker-compose-data.yml -p test down```
+
+##Windows containers
+
+* http://26thcentury.com/2016/01/03/dockerfile-to-create-sql-server-express-windows-container-image/
+* Dockerfile for sql server: https://github.com/brogersyh/Dockerfiles-for-windows/blob/master/sqlexpress/dockerfile
+
+1. Remote onto azure machine (Windows Server 2016 TP4 - comes with Docker installed)
+1. Search for windows images:```docker search *```
+1. Show local images:```docker images```
+1. Run sql in container:```docker run --name sql -d -p 1433:1433 -v c:\sql:c:\sql sqlexpress```
+1. Run another sql in container:```docker run --name sql -d -p 1434:1433 -v c:\sql2:c:\sql sqlexpress```
+1. Run SQL management studio, log on with ip,port and sa thepassword2#
+
+* Can't get .net core container to build :( However, the commands work when run manually...
+
+1. Show startup.cs with sql code
+1. Run aspnet container mounted against host:```docker run -it -p 80:80 -v c:\app:c:\app --name hello --rm microsoft/aspnet cmd```
+
+##Docker benefits
+
+* Repeatability
+  * We never have to worry about environment being setup correctly or having the right version of a dependency
+  * Gives us more confidence that if it works on one machine, it will work on any machine
+* Isolation
+  * Software running in dockerone container is not going to affect other containers
+  * We can upgrade dependencies in one container independently of all the others
+  * We can run mutliple environments on a single machine using Dockers network virtualization
+* Speed
+  * Containers include the minimal runtime requirements of the application, so can be deployed quickly
+* Automation
+  * Greatly reduces the friction in automating deployments
+  * Makes it much easier to build distributed applications - and we will cover this in more detail in the next talk on Service Discovery and Orchestration with Docker
+  * Using the Docker API and Compose, it is simple to define and run complicated applications and networks with multiple containers
+  * Unified deployment platform
+* Portabliliy
+  * Can deploy any container onto any machine running Docker
+* Version tracking
+  * Each image has a version number, so you know exactly what it contains
+  * Versions are tracked and available for everyone in central repository
 
 
 ## TODO: compose options eg scale, extend compose files
