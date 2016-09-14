@@ -1,10 +1,11 @@
-FROM microsoft/aspnet:1.0.0-rc1-final
+FROM microsoft/dotnet:latest
 
 COPY project.json /app/
 WORKDIR /app
-RUN ["dnu", "restore"]
+RUN ["dotnet", "restore"]
 
 COPY . /app
 
-EXPOSE 5004
-ENTRYPOINT ["dnx", "web"]
+EXPOSE 5020/tcp
+ENV ASPNETCORE_URLS http://*:5020
+ENTRYPOINT ["dotnet", "run"]

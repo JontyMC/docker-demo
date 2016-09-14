@@ -1,22 +1,22 @@
 {
-    "version": "1.0.0-*",
-    "webroot": "wwwroot",
-    "exclude": [
-        "wwwroot"
-    ],
-    "packExclude": [
-        "**.kproj",
-        "**.user",
-        "**.vspscc"
-    ],
-    "dependencies": {
-        "Microsoft.AspNet.Server.Kestrel": "1.0.0-rc1-final",
-        "StackExchange.Redis.Mono": "1.0.0"  
-    },
-    "commands": {
-        "web": "Microsoft.AspNet.Server.Kestrel --server.urls http://*:5004"    
-    },
-    "frameworks": {
-        "dnx451": { }
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "emitEntryPoint": true
+  },
+  "dependencies": {
+      "StackExchange.Redis": "1.1.605"
+  },
+  "frameworks": {
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.0"
+        },
+        "Microsoft.AspNetCore.Server.Kestrel": "1.0.0"
+      },
+      "imports": "dnxcore50"
     }
+  }
 }

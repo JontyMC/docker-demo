@@ -1,14 +1,18 @@
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using System.Threading.Tasks;
+using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
-namespace Api
+namespace aspnetcoreapp
 {
     public class Startup
     {
         public void Configure(IApplicationBuilder app)
         {
-            app.Run(async x => await x.Response.WriteAsync("Hello world!"));
+            app.Run(x =>
+            {
+                return x.Response.WriteAsync("Hello from ASP.NET Core!");
+            });
         }
     }
 }

@@ -1,9 +1,9 @@
-using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using System.Threading.Tasks;
-using StackExchange.Redis;
+using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
-namespace Api
+namespace aspnetcoreapp
 {
     public class Startup
     {
