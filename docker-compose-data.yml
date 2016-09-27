@@ -9,6 +9,6 @@ services:
         build: ./api_redis
         image: demo/hello
         ports:
-            - "5004:5004"
+            - "5020:5020"
 volumes:
     redis_data: {}
