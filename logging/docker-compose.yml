@@ -6,7 +6,11 @@ services:
         ports:
             - "6379:6379"
     hello:
-        build: ./api_redis
+        build: ../api_logging
         container_name: hello
         ports:
             - "5020:5020"
+        logging:
+            driver: gelf
+            options:
+                gelf-address: "udp://172.17.0.1:5037"

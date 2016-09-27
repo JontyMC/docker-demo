@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Hosting;
 
-namespace aspnetcoreapp
+namespace HelloApi
 {
     public class Program
     {

@@ -112,6 +112,8 @@ docker
 * Normal workflow would be for CI to push images to a registry
 * Docker changes dev/ops contract from nuget package to docker image
 
+* TODO: Teamcity / local registry
+
 ##Make Changes to a Container
 
 * How do we make a change and rebuild the container?
@@ -195,7 +197,7 @@ docker
 1. Show logs:```docker-compose logs```
 1. Show in browser:```http://localhost:5004/```
   * No data, because redis has been reinstalled
-1. Run cli:```docker run -it --net=dockerdemo_default --link redis:redis --rm redis sh -c 'exec redis-cli -h redis'```
+1. Run cli:```docker run -it --net=dockerdemo_default --rm redis sh -c 'exec redis-cli -h redis'```
 1. Insert message:```SET message "Hello from Redis"```
 1. Get it back:```GET message```
 1. Exit

@@ -1,0 +1,24 @@
+version: "2"
+services:
+    elasticsearch:
+        image: elasticsearch
+        container_name: elasticsearch
+        ports:
+            - "9200:9200"
+            - "9300:9300"
+    logstash:
+        image: logstash
+        container_name: logstash
+        command: logstash -f /logstash/logstash.conf
+        volumes:
+            - ./logstash:/logstash
+        expose:
+            - "5037"
+        ports:
+            - "5037:5037"
+            - "5037:5037/udp"
+    kibana:
+        image: kibana
+        container_name: kibana
+        ports:
+            - "5601:5601"
