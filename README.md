@@ -74,6 +74,7 @@ docker
   * Simplest possible .NET Core API
 1. Explain [Dockerfile](api/Dockerfile)
   * Inherits from dotnet core linux
+  * Show in docker hub https://hub.docker.com/r/microsoft/dotnet/
   * Each command is a cached layer
   * DNU restore restores all packages in the project.json file
   * So, we copy project.json first so we don't have to re-pull packages every time we rebuild the code layer
@@ -82,12 +83,13 @@ docker
 1. List images:```docker images -a```
 1. Run container:```docker run -d -P --name hello demo/hello```
 1. Show containers (point out dynamically assigned port):```docker ps -a```
-1. Show in browser:```http://localhost:xxxx/```
+1. Show curl:```curl localhost:xxxx```
 1. Show logs:```docker logs hello```
 1. Show info, eg ip:```docker inspect hello```
 1. Show stats, ```docker stats```
 1. Open another console window
 1. Run ```docker events```
+1. Show exec a command inside running container: ```docker exec -it hello /bin/bash```
 1. In original window ```docker stop hello```
 1. ```docker start hello```
 1. Show running containers:```docker ps -a```
@@ -97,7 +99,7 @@ docker
 1. Show running containers:```docker ps -a```
 1. Run image with specific port:```docker run -d -p 5020:5020 --name hello demo/hello```
 1. Show running containers:```docker ps -a```
-1. Show in browser:```http://localhost:5020/```
+1. Show:```curl localhost:5020```
 
 ##Make Changes to a Container
 
@@ -107,7 +109,7 @@ docker
 1. Rebuild image:```docker build -t demo/hello .```
 1. Run image:```docker run -d -p 5020:5020 --name hello demo/hello```
 1. Show running containers:```docker ps -a```
-1. Show in browser:```http://localhost:5020/```
+1. Show in browser:```curl localhost:5020``
 
 * Having to rebuild the image each time is clunky
 * Instead we can mount a host directory inside the container
@@ -118,7 +120,7 @@ docker
 1. Show running containers:```docker ps -a```
 1. Change api code again
 1. Restart container:```docker restart hello```
-1. Show in browser:```http://localhost:5020/```
+1. Show:```curl localhost:5020```
 
 ##Containerized Redis
 
@@ -141,7 +143,7 @@ docker
 1. Build image:```docker build -t demo/hello .```
 1. Run image:```docker run -d -p 5020:5020 --link redis:redis --name hello demo/hello```
 1. Show running containers:```docker ps -a```
-1. Show in browser:```http://localhost:5020/```
+1. Show:```curl localhost:5020```
 
 ##Managing Multiple Containers with Compose
 
@@ -156,10 +158,9 @@ docker
 1. Run compose as daemon:```docker-compose up -d```
 1. Show running containers:```docker ps -a```
 1. Show logs:```docker-compose logs```
-1. Show in browser:```http://localhost:5020/```
+1. Show:```curl localhost:5020```
   * No data, because redis container has been killed and run again
   * Ideally we need a way of persisting data
-1. Insert message:```SET message "Hello from Redis"```
 1. Remove composed application:```docker-compose down```
 
 ##Persistence with Data Volumes
@@ -188,7 +189,7 @@ docker
 1. Show [docker-compose-data.yml](docker-compose-data.yml)
 1. Run compose:```docker-compose -f docker-compose-data.yml up -d```
 1. Show running containers:```docker ps -a```
-1. Show in browser:```http://localhost:5020/```
+1. Show in browser:```curl localhost:5020```
 1. Remove composed application:```docker-compose down```
 
 * We didn't actually need to create the volume, as it would be automatically created through compose up
@@ -218,7 +219,7 @@ docker
 1. Lets run 5 environments in one line:```for i in {1..5}; do COMPOSE_PROJECT_NAME=env$i docker-compose -f docker-compose-multi.yml up -d; done```
 1. Show running containers:```docker ps -a```
 
-* Possible to override docker compose
+* Possible to extend docker compose using another file, so you could have a production compose and a local or testing override compose that will build one or more of the images
 
 ##Running Tests
 
@@ -227,26 +228,125 @@ docker
 1. Run Phantom tests:```docker run --rm --net test_default --link test_hello_1:hello -v `pwd`:/mnt/test cmfatih/phantomjs /usr/bin/phantomjs /mnt/test/test.js```
 1. Remove composed application:```docker-compose -f docker-compose-data.yml -p test down```
 
-##Registry (Docker hub)
+##Logging
 
-* Now we have a Docker image, what are we going to do with it?
-* Need some way to share images
-* Docker has concept of registries, a bit like nuget repositories, but for docker images
-* The equivalent of the public nuget feed is docker hub::```https://hub.docker.com/```
-* Have previously pushed the "hello" container to dockerhub:```docker push jontymc/hello```
-* Show, inc build settings:```https://hub.docker.com/r/jontymc/hello/```
+1. Show elk compose and logstash config
+1. Run elk: ```cd elk``` ```docker-compose up -d```
+1. Show containers: ```docker ps -a```
+1. Show kibana: ```http://localhost:5601```
+1. Show logging compose - gelf logging
+1. Run logging: ```cd ../logging``` ```docker-compose up -d```
+1. Logs: ```docker-compose logs```
+1. Show kibana: ```http://localhost:5601```
 
-1. Show running containers:```docker ps -a```
-1. Pull built image from registry:```docker pull jontymc/hello```
-1. Run image with specific port:```docker run -t -d -p 5005:5004 --name hello2 jontymc/hello```
-1. Show in browser:```http://localhost:5005/```
-1. Show other in browser:```http://localhost:5004/```
-1. Stop and remove in one line: ```docker rm --force `docker ps -qa````
+##Docker orchestration
+
+* (pre-run this: ```for N in 1 2 3 4 5; do docker-machine create --driver virtualbox node$N; done```)
+* Now we can easily run full applications with a single command
+* We want to provision new boxes to run docker containers on
+* Docker has docker-machine which can provision new docker hosts
+
+1. Run ```docker-machine ls```
+1. Can see I previously created 5 machines
+1. Let's create a new machine locally using the virtualbox driver: ```docker-machine create --driver virtualbox demo1```
+  * There are many drivers, eg aws https://docs.docker.com/machine/drivers/aws/
+1. Open new terminal
+1. Connect to existing: ```docker-machine ssh node1```
+1. Show docker running: ```docker info```
+1. Exit
+
+* Now we can provision machines, we want to deploy containers too them
+* Let's create a cluster of machines using docker swarm
+
+1. Run ```docker-machine ls```
+1. Get ip for node1: ```docker-machine ip node1```
+1. SSH onto node1: ```docker-machine ssh node1```
+1. Initialize swarm: ```docker swarm init --advertise-addr [ip-address]```
+
+* output is the key required to join this cluster
+
+1. Open new terminal
+1. ssh onto node2: ```docker-machine ssh node2```
+1. join cluster as worker, eg: ```docker swarm join \
+    --token SWMTKN-1-4j35tekvgp868z0ew096mykzziyibfoapiw4b4kkh0oij8sdwe-amkvb95iog9od0zk5yffqedj9 \
+    192.168.99.101:2377```
+1. Exit
+1. Do same for other nodes, but quicker:
+  * ```for NODE in node3 node4 node5; do```
+  * ```docker-machine ssh $NODE ```
+  * Then paste join token command, eg: ```docker swarm join \
+        --token SWMTKN-1-4j35tekvgp868z0ew096mykzziyibfoapiw4b4kkh0oij8sdwe-amkvb95iog9od0zk5yffqedj9 \
+          192.168.99.101:2377```
+  * ```done```
+1. Lets list the nodes in cluster: ```docker-machine ssh node1 docker node ls```
+1. See that node1 is master
+1. Promote node 2,3 to master: ```docker-machine ssh node1 docker node promote node2 node3```
+1. List the nodes in cluster again: ```docker-machine ssh node1 docker node ls```
+  * Managers are responsible for maintaining the cluster
+  * If the leader manager goes down, another will be elected the new leader
+1. Stop node 1: ```docker-machine stop node1```
+1. List from node2: ```docker-machine ssh node2 docker node ls```
+1. Start node 1: ```docker-machine start node1```
+
+* Swarm introduces new primitives to docker
+* Node: ```A node is an instance of Docker Engine participating in a swarm.```
+* Service: ```A service is the definition of the tasks to execute on the worker nodes. It is the central structure of the swarm system and the primary root of user interaction with the swarm.```
+* Task: ```A task carries a Docker container and commands to run inside the container. It is the atomic scheduling unit of swarm.```
+
+* Let's create a service:
+
+1. Node1: ```docker-machine ssh node1```
+1. Create: ```docker service create --name Web --publish 80:80 --replicas=3 nginx:latest```
+  * Swarm will ensure we have 3 instances of the service running across our nodes
+1. List our web services: ```docker service ps Web```
+  * Shows which nodes are running the service
+1. Ports are published to all nodes in the cluster: ```curl localhost:80```
+1. Show containers: ```docker ps -a```
+1. Kill container: ```docker kill [container ID]```
+1. Swarm has reprovisioned an nginx container: ```docker service ps Web```
+1. Scale up: ```docker service update Web --replicas 5```
+1. Remove: ```docker service rm Web```
+1. Can upgrade services, use specific version of nginx: ```docker service create --name Web --publish 80:80 --replicas 3 nginx:1.10.1```
+1. Show running: ```docker service ps Web```
+1. Update to later verions: ```docker service update Web --image nginx:1.11.3```
+1. Can see it updates each task individually: ```docker service ps Web```
+1. Remove: ```docker service rm Web```
+1. Can create global service: ```docker service create --name Web --mode global --publish 80:80 nginx:latest```
+1. Remove: ```docker service rm Web```
+
+* Other things swarm can do:
+* If a node fails swarm will reallocated work on another node
+* To service a node, you can drain the node
+* You can define networks to span the hosts you want
+
+##Private Registry
+
+* (Pre-pull microsoft/dotnet:latest)
+* Images are cached per node
+* We don't want to pull from docker hub in each node
+* Instead we can create a private registry shared between the nodes
+
+1. Create registry: ```docker service create --name registry -p 5000:5000 registry:2```
+  * Run this as a service
+  * Swarm will insure there is always an instance of it running
+1. List services: ```docker service ls```
+1. Pull an image from docker hub: ```docker pull alpine```
+1. Tag the image for our registry: ```docker tag alpine localhost:5000/alpine```
+1. Push to the registry: ```docker push localhost:5000/alpine```
+1. List images: ```curl localhost:5000/v2/_catalog```
+1. Open new terminal
+1. SSH onto node2: ```docker pull localhost:5000/alpine```
+1. List images: ```docker images```
+
+* Can provide different storage backend for the registry out of the box, eg can use S3 to stort images
+* Supports let's encrypt for TLS
+* Alternatively, artifactory can be used as a registry
 
 * Normal workflow would be for CI to push images to a registry
 * Docker changes dev/ops contract from nuget package to docker image
 
-* TODO: Teamcity / local registry
+* Run teamcity in container: ```docker run -d --name teamcity-server -p 8111:8111 jetbrains/teamcity-server```
+* Dockerize play: ```cd ~/test-play``` ```sbt docker:publishLocal```
 
 ##Windows containers
 
@@ -283,12 +383,10 @@ docker
   * Unified deployment platform
 * Portabliliy
   * Can deploy any container onto any machine running Docker
+  * Most orchestration and infrastructure software now supports running containers
 * Version tracking
   * Each image has a version number, so you know exactly what it contains
   * Versions are tracked and available for everyone in central repository
-
-
-## TODO: compose options eg scale, extend compose files
 
 ##Security features
 
